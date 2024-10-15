@@ -6,25 +6,30 @@ def initialisation(dimensions):
     parametres = {}
     C = len(dimensions)
 
-
-
     for c in range(1, C):
-        parametres['W' + str(c)] = np.random.randn(dimensions[c], dimensions[c - 1])*10
-        parametres['b' + str(c)] = np.random.randn(dimensions[c], 1)*10
+        """randn?"""
+        parametres['W' + str(c)] = np.random.rand(dimensions[c], dimensions[c - 1])
+        parametres['b' + str(c)] = np.random.rand(dimensions[c], 1)
+        
+    print(parametres)
     return parametres
 
 def forward_propagation(X, parametres):
   
-  activations = {'A0': X}
+    activations = {'A0': X}
 
-  C = len(parametres) // 2
+    C = len(parametres) // 2
 
-  for c in range(1, C + 1):
 
-    Z = parametres['W' + str(c)].dot(activations['A' + str(c - 1)]) + parametres['b' + str(c)]
-    activations['A' + str(c)] = 1 / (1 + np.exp(-Z))
+    for c in range(1, C + 1):
 
-  return activations
+        Z = parametres['W' + str(c)].dot(activations['A' + str(c - 1)]) + parametres['b' + str(c)]
+        activations['A' + str(c)] = (1 / (1 + np.exp(-Z)) -0.5)*2
+        """activations['A' + str(c)] = Z"""
+        
+
+    return activations
+
 
 def score(grille):
 
@@ -48,10 +53,20 @@ def score(grille):
     return False
 
 def predict(X, parametres):
-  activations = forward_propagation(X, parametres)
-  C = len(parametres) // 2
-  Af = activations['A' + str(C)]
-  return Af
+  
+    activations = forward_propagation(X, parametres)
+    C = len(parametres) // 2
+    Af = activations['A' + str(C)]
+    print("act")
+    print(Af)
+    """print(np.sum(Af, axis = 0))
+    Pour = np.sum(Af, axis = 0)"""
+
+    """for i in range(3):
+        Af[:,i] = Af[:,i]/Pour[i]
+    print(np.sum(Af, axis = 0))
+    print(Af)"""
+    return Af
 
 def update(parametres, learning_rate, dimensions):
 
@@ -60,8 +75,9 @@ def update(parametres, learning_rate, dimensions):
     C = len(new_parametre) // 2
     
     for c in range(1, C + 1):
-        new_parametre['W' + str(c)] = new_parametre['W' + str(c)] + np.random.randn(dimensions[c], dimensions[c - 1])*learning_rate
-        new_parametre['b' + str(c)] = new_parametre['b' + str(c)] + np.random.randn(dimensions[c], 1)*learning_rate
+        """randn?"""
+        new_parametre['W' + str(c)] = new_parametre['W' + str(c)] + (np.random.randn(dimensions[c], dimensions[c - 1])*learning_rate)/5
+        new_parametre['b' + str(c)] = new_parametre['b' + str(c)] + (np.random.randn(dimensions[c], 1)*learning_rate)/5
 
     return new_parametre
 
@@ -70,10 +86,23 @@ def generation(nombre_joueur = 5, parametres_list = 0, victoire = 1, defaite = -
     X_total = np.zeros((nombre_joueur,nombre_joueur,9), dtype=int)
     classement = np.zeros(nombre_joueur)
 
-    for i in range(9):  
+    for i in range(9):
+        print("BB")
+        for k in range(nombre_joueur):
+            for p in range(nombre_joueur):
+                print(X_total[k,p], end='')
+            print('')
+
+        
+        
+        
         for j in range(X_total.shape[1]):          
 
             Y = predict(X_total[j].T, parametres_list[j]).T
+
+            
+            
+            
 
             X_total[j,np.arange(X_total.shape[1]),np.argmax(Y - np.abs(X_total[j]), axis=1)] = 1
 
@@ -117,20 +146,8 @@ def mutation(parametres_list = 0, classement = 0, nombre_joueur = 5, learning_ra
 
     return new_parametres_list
 
-def multi_evaluation(parametre_darwin = 0):
-
-    parametre = init(nombre_joueur=99)
-
-    parametre = np.insert(parametre, [0], parametre_darwin, axis= None)
-
     
-     
-    classement = generation(nombre_joueur = 100, parametres_list = parametre, victoire=0, defaite=-1)
-
-     
-    print(str(classement[0]/2)  +  " %")
-    
-def calcul(nombre_joueur = 100, nombre_génération = 100000, learning_rate = 10, dimensions = list((9, 9, 9, 9, 9))):
+def calcul(nombre_joueur = 3, nombre_génération = 2000, learning_rate = 2, dimensions = list((9, 9))):
 
     parametres_list = init(nombre_joueur, dimensions)
 
@@ -138,24 +155,10 @@ def calcul(nombre_joueur = 100, nombre_génération = 100000, learning_rate = 10
 
         classement = generation(nombre_joueur, parametres_list)
 
-        
-
         parametres_list = mutation(parametres_list, classement, nombre_joueur, learning_rate, dimensions)
 
-        
 
-        if t%10 == 0 and t != 0:
-
-            parametres_darwin = parametres_list[np.argmax(classement)]
-            multi_evaluation(parametre_darwin = parametres_darwin)
-
-        if t%10 == 0 and t != 0:
-
-            fichier = open("data.txt", "a")
-            fichier.write(str(parametres_darwin))
-            fichier.close()
-
-    
+    parametres_darwin = parametres_list[np.argmax(classement)]
 
     return parametres_darwin
 
